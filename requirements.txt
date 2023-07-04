@@ -2,3 +2,4 @@ Flask
 Gunicorn
 Scipy
 flask_cors
+gunicorn
