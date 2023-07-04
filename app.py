@@ -45,8 +45,15 @@ def allocate_budget():
 
     # Solve the problem
     result = linprog(c, A_ub=A_ub, b_ub=b_ub, A_eq=A_eq, b_eq=b_eq, method='highs')
-
-    return jsonify(result.x.tolist() if result.success else None)
+    allocation = result.x.tolist() if result.success else None
+    
+    # Calculate the expected revenue
+    expected_revenue = sum(allocation[i] * channels[i]['roi'] for i in range(num_channels)) if allocation else None
+    
+    return jsonify({
+        "allocation": allocation,
+        "expected_revenue": expected_revenue
+    })
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))  # Use PORT if it's there
