@@ -1,7 +1,10 @@
 from flask import Flask, request, jsonify
 from scipy.optimize import linprog
+from flask_cors import CORS
+import os
 
 app = Flask(__name__)
+CORS(app)  # Enable CORS
 
 @app.route('/allocate', methods=['POST'])
 def allocate_budget():
@@ -46,4 +49,5 @@ def allocate_budget():
     return jsonify(result.x.tolist() if result.success else None)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    port = int(os.environ.get('PORT', 5000))  # Use PORT if it's there
+    app.run(host='0.0.0.0', port=port)
