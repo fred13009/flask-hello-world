@@ -13,11 +13,7 @@ def allocate_budget():
         data = request.get_json()
         channels = data['channels']
         budget = data['budget']
-        min_budgets = data['min_budgets']
-        max_budgets = data['max_budgets']
-        min_sales = data['min_sales']
-        max_sales = data['max_sales']
-        
+
         num_channels = len(channels)
 
         # Objective function coefficients (negative for maximization)
@@ -31,19 +27,17 @@ def allocate_budget():
         A_ub = []
         b_ub = []
 
-        # Min/max budget constraints
+        # Min/max budget constraints and min/max sales constraints
         for i in range(num_channels):
             A_ub.append([1 if j == i else 0 for j in range(num_channels)])
-            b_ub.append(max_budgets[i])
+            b_ub.append(channels[i]['max_budget'])
             A_ub.append([-1 if j == i else 0 for j in range(num_channels)])
-            b_ub.append(-min_budgets[i])
+            b_ub.append(-channels[i]['min_budget'])
 
-        # Min/max sales constraints
-        for i in range(num_channels):
             A_ub.append([channels[i]['roi'] if j == i else 0 for j in range(num_channels)])
-            b_ub.append(max_sales[i])
+            b_ub.append(channels[i]['max_sale'])
             A_ub.append([-channels[i]['roi'] if j == i else 0 for j in range(num_channels)])
-            b_ub.append(-min_sales[i])
+            b_ub.append(-channels[i]['min_sale'])
 
         # Solve the problem
         result = linprog(c, A_ub=A_ub, b_ub=b_ub, A_eq=A_eq, b_eq=b_eq, method='highs')
