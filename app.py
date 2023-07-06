@@ -27,31 +27,42 @@ def allocate_budget():
         A_ub = []
         b_ub = []
 
-        # Min/max budget constraints and min/max sales constraints
+        # Budget or sales constraints
         for i in range(num_channels):
-            if 'max_budget' in channels[i] and 'min_budget' in channels[i]:
-                A_ub.append([1 if j == i else 0 for j in range(num_channels)])
-                b_ub.append(channels[i]['max_budget'])
-                A_ub.append([-1 if j == i else 0 for j in range(num_channels)])
-                b_ub.append(-channels[i]['min_budget'])
+            if 'min_budget' in channels[i] or 'max_budget' in channels[i]:
+                if 'min_budget' in channels[i]:
+                    A_ub.append([-1 if j == i else 0 for j in range(num_channels)])
+                    b_ub.append(-channels[i]['min_budget'])
 
-            if 'max_sale' in channels[i] and 'min_sale' in channels[i]:
-                A_ub.append([channels[i]['roi'] if j == i else 0 for j in range(num_channels)])
-                b_ub.append(channels[i]['max_sale'])
-                A_ub.append([-channels[i]['roi'] if j == i else 0 for j in range(num_channels)])
-                b_ub.append(-channels[i]['min_sale'])
+                if 'max_budget' in channels[i]:
+                    A_ub.append([1 if j == i else 0 for j in range(num_channels)])
+                    b_ub.append(channels[i]['max_budget'])
+
+            if 'min_sale' in channels[i] or 'max_sale' in channels[i]:
+                if 'min_sale' in channels[i]:
+                    A_ub.append([-channels[i]['roi'] if j == i else 0 for j in range(num_channels)])
+                    b_ub.append(-channels[i]['min_sale'])
+
+                if 'max_sale' in channels[i]:
+                    A_ub.append([channels[i]['roi'] if j == i else 0 for j in range(num_channels)])
+                    b_ub.append(channels[i]['max_sale'])
 
         # Solve the problem
         result = linprog(c, A_ub=A_ub, b_ub=b_ub, A_eq=A_eq, b_eq=b_eq, method='highs')
-        allocation = result.x.tolist() if result.success else None
+
+        if result.success:
+            allocation = result.x.tolist()
+        else:
+            allocation = None
 
         # Calculate the expected revenue
         expected_revenue = sum(allocation[i] * channels[i]['roi'] for i in range(num_channels)) if allocation else None
-
+        
         return jsonify({
             "allocation": allocation,
             "expected_revenue": expected_revenue
         })
+
     except Exception as e:
         print(str(e))
         print(traceback.format_exc())
